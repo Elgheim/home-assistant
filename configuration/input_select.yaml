@@ -1,0 +1,9 @@
+# Input Select for Scene Tracking
+
+lighting_scene:
+  name: "Current Lighting Scene"
+  options:
+    - "Day Light"
+    - "Evening Light"
+  initial: "Day Light"
+  icon: mdi:lightbulb-group

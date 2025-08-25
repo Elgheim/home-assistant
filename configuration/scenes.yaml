@@ -1,0 +1,53 @@
+# Lighting Scenes
+
+- name: "Day Light"
+  id: day_light
+  entities:
+    # IKEA Trådfri lights (replace with your actual entity IDs)
+    light.tradfri_bulb_1:
+      state: on
+      brightness: 255
+      color_temp: 250  # Cool white for day
+    light.tradfri_bulb_2:
+      state: on
+      brightness: 255
+      color_temp: 250
+    light.tradfri_bulb_3:
+      state: on
+      brightness: 255
+      color_temp: 250
+    light.tradfri_bulb_4:
+      state: on
+      brightness: 255
+      color_temp: 250
+    # Extra light with higher brightness for day
+    light.extra_light:
+      state: on
+      brightness: 200
+      color_temp: 250
+
+- name: "Evening Light"
+  id: evening_light
+  entities:
+    # IKEA Trådfri lights with warm, dimmed settings
+    light.tradfri_bulb_1:
+      state: on
+      brightness: 100
+      color_temp: 454  # Warm white for evening
+    light.tradfri_bulb_2:
+      state: on
+      brightness: 100
+      color_temp: 454
+    light.tradfri_bulb_3:
+      state: on
+      brightness: 100
+      color_temp: 454
+    light.tradfri_bulb_4:
+      state: on
+      brightness: 100
+      color_temp: 454
+    # Extra light with lower brightness for evening
+    light.extra_light:
+      state: on
+      brightness: 50
+      color_temp: 454

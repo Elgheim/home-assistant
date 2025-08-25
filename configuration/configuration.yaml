@@ -1,0 +1,36 @@
+# Main Home Assistant Configuration
+
+# Basic setup
+homeassistant:
+  name: Home
+  latitude: !secret home_latitude
+  longitude: !secret home_longitude
+  elevation: !secret home_elevation
+  unit_system: metric
+  time_zone: !secret time_zone
+
+# Include other configuration files
+automation: !include_dir_merge_list ../automations/
+script: !include_dir_merge_named ../scripts/
+scene: !include scenes.yaml
+input_select: !include input_select.yaml
+
+# Frontend configuration
+frontend:
+  themes: !include_dir_merge_named ../themes/
+
+# Example basic integrations
+http:
+  server_port: 8123
+
+# Enable the default mobile app integration
+mobile_app:
+
+# Enable person tracking
+person:
+
+# Enable zones
+zone:
+
+# Enable the sun component
+sun:

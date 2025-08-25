@@ -1,0 +1,66 @@
+# IKEA Remote Scene Cycling Automation
+
+- alias: "IKEA Remote - Cycle Scenes"
+  description: "Cycle between day and evening light scenes using IKEA remote"
+  trigger:
+    # Trigger on double-click of the power button (adjust based on your remote)
+    - platform: device
+      device_id: !secret ikea_remote_device_id  # Add your remote's device ID to secrets
+      domain: zha  # or zigbee2mqtt depending on your setup
+      type: remote_button_double_press
+      subtype: turn_on
+  condition: []
+  action:
+    - choose:
+        # If day light is currently active, switch to evening
+        - conditions:
+            - condition: state
+              entity_id: scene.day_light
+              state: "scening"  # Scene was recently activated
+          sequence:
+            - service: scene.turn_on
+              target:
+                entity_id: scene.evening_light
+            - service: notify.persistent_notification
+              data:
+                message: "Evening light activated"
+                title: "Scene Changed"
+        # If evening light is active or no scene is active, switch to day
+        - conditions:
+            - condition: or
+              conditions:
+                - condition: state
+                  entity_id: scene.evening_light
+                  state: "scening"
+                - condition: template
+                  value_template: "{{ not is_state('scene.day_light', 'scening') and not is_state('scene.evening_light', 'scening') }}"
+          sequence:
+            - service: scene.turn_on
+              target:
+                entity_id: scene.day_light
+            - service: notify.persistent_notification
+              data:
+                message: "Day light activated"
+                title: "Scene Changed"
+      # Default action if no conditions match
+      default:
+        - service: scene.turn_on
+          target:
+            entity_id: scene.day_light
+
+- alias: "IKEA Remote - Scene Toggle Alternative"
+  description: "Alternative method using input_select to track current scene"
+  trigger:
+    - platform: device
+      device_id: !secret ikea_remote_device_id
+      domain: zha
+      type: remote_button_double_press
+      subtype: turn_on
+  condition: []
+  action:
+    - service: input_select.select_next
+      target:
+        entity_id: input_select.lighting_scene
+    - service: scene.turn_on
+      target:
+        entity_id: "scene.{{ states('input_select.lighting_scene') | lower | replace(' ', '_') }}"
