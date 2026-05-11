@@ -50,6 +50,34 @@ Run YAML linting if available:
 yamllint configuration automations scripts themes
 ```
 
+GitHub Actions also validates every push and pull request. Pushes to `main` publish a downloadable `home-assistant-config` artifact with local-only files and secrets excluded.
+
+## Publishing
+
+The repository is configured with a GitHub workflow in `.github/workflows/home-assistant.yml`.
+
+- Pull requests and pushes run YAML linting and Home Assistant config validation.
+- Pushes to `main` publish a clean config artifact.
+
+## Deployment
+
+Manual deploys are configured in `.github/workflows/deploy.yml`. The workflow validates the config, syncs the repository to the Home Assistant host with `rsync`, and can optionally restart Home Assistant.
+
+Configure these GitHub Actions secrets before running the deploy workflow:
+
+- `HA_SSH_HOST` - Home Assistant host name or IP address
+- `HA_SSH_PORT` - SSH port, usually `22`
+- `HA_SSH_USER` - SSH user with write access to the config path
+- `HA_SSH_PRIVATE_KEY` - Private key for the SSH user
+- `HA_CONFIG_PATH` - Remote config directory, for example `/config`
+- `HA_RESTART_COMMAND` - Restart command, for example `ha core restart`
+
+Use a protected `production` environment in GitHub if deploys should require approval.
+
+## Branch Protection
+
+Protect `main` and require the `Validate configuration` status check from GitHub Actions before merging. This keeps invalid YAML or invalid Home Assistant config out of the default branch.
+
 ## Conventions
 
 - Use stable `entity_id` references where possible.

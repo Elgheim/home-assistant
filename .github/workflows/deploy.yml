@@ -1,0 +1,68 @@
+name: Deploy Home Assistant
+
+on:
+  workflow_dispatch:
+    inputs:
+      restart:
+        description: Restart Home Assistant after deploy
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: home-assistant-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy config
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare example secrets for validation
+        run: cp configuration/secrets.yaml.example configuration/secrets.yaml
+
+      - name: Lint YAML
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: configuration automations scripts themes .github/workflows
+          config_file: .yamllint
+          strict: true
+
+      - name: Check Home Assistant config
+        uses: ludeeus/action-ha-config-check@main
+        with:
+          path: configuration
+
+      - name: Install SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HA_SSH_PRIVATE_KEY }}
+
+      - name: Trust Home Assistant host key
+        run: ssh-keyscan -p "${{ secrets.HA_SSH_PORT }}" "${{ secrets.HA_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy configuration files
+        run: |
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.agents' \
+            --exclude 'skills-lock.json' \
+            --exclude 'configuration/secrets.yaml' \
+            --exclude 'configuration/.storage' \
+            ./ "${{ secrets.HA_SSH_USER }}@${{ secrets.HA_SSH_HOST }}:${{ secrets.HA_CONFIG_PATH }}/"
+
+      - name: Restart Home Assistant
+        if: inputs.restart == 'true'
+        run: |
+          ssh -p "${{ secrets.HA_SSH_PORT }}" \
+            "${{ secrets.HA_SSH_USER }}@${{ secrets.HA_SSH_HOST }}" \
+            "${{ secrets.HA_RESTART_COMMAND }}"

@@ -1,0 +1,60 @@
+name: Home Assistant
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate configuration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare example secrets
+        run: cp configuration/secrets.yaml.example configuration/secrets.yaml
+
+      - name: Lint YAML
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: configuration automations scripts themes .github/workflows
+          config_file: .yamllint
+          strict: true
+
+      - name: Check Home Assistant config
+        uses: ludeeus/action-ha-config-check@main
+        with:
+          path: configuration
+
+  package:
+    name: Publish config artifact
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build publish bundle
+        run: |
+          mkdir -p dist/home-assistant
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.agents' \
+            --exclude 'skills-lock.json' \
+            --exclude 'configuration/secrets.yaml' \
+            ./ dist/home-assistant/
+
+      - name: Upload config artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-assistant-config
+          path: dist/home-assistant
+          if-no-files-found: error
