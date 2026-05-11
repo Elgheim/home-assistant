@@ -27,9 +27,11 @@ jobs:
           strict: true
 
       - name: Check Home Assistant config
-        uses: ludeeus/action-ha-config-check@main
-        with:
-          path: configuration
+        run: >-
+          docker run --rm
+          -v "${{ github.workspace }}:/config-src:ro"
+          ghcr.io/home-assistant/home-assistant:stable
+          python -m homeassistant --script check_config --config /config-src/configuration
 
   package:
     name: Publish config artifact
