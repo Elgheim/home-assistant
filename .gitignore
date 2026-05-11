@@ -7,6 +7,10 @@ configuration/deps/
 configuration/tts/
 configuration/www/community/
 
+# Local agent tooling
+.agents/
+skills-lock.json
+
 # Node modules
 node_modules/
 npm-debug.log*
