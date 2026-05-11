@@ -15,6 +15,244 @@ script: !include_dir_merge_named ../scripts/
 scene: !include scenes.yaml
 input_select: !include input_select.yaml
 
+# Panasonic Aquarea / HeishaMon monitoring
+mqtt:
+  sensor:
+    - name: "Panasonic Heat Pump Outside Temp"
+      unique_id: panasonic_heat_pump_outside_temp
+      state_topic: "panasonic_heat_pump/main/Outside_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Main Inlet Temp"
+      unique_id: panasonic_heat_pump_main_inlet_temp
+      state_topic: "panasonic_heat_pump/main/Main_Inlet_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Main Outlet Temp"
+      unique_id: panasonic_heat_pump_main_outlet_temp
+      state_topic: "panasonic_heat_pump/main/Main_Outlet_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Main Target Temp"
+      unique_id: panasonic_heat_pump_main_target_temp
+      state_topic: "panasonic_heat_pump/main/Main_Target_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Compressor Freq"
+      unique_id: panasonic_heat_pump_compressor_freq
+      state_topic: "panasonic_heat_pump/main/Compressor_Freq"
+      unit_of_measurement: "Hz"
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Pump Flow"
+      unique_id: panasonic_heat_pump_pump_flow
+      state_topic: "panasonic_heat_pump/main/Pump_Flow"
+      unit_of_measurement: "L/min"
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Heat Power Production"
+      unique_id: panasonic_heat_pump_heat_power_production
+      state_topic: "panasonic_heat_pump/main/Heat_Power_Production"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Heat Power Consumption"
+      unique_id: panasonic_heat_pump_heat_power_consumption
+      state_topic: "panasonic_heat_pump/main/Heat_Power_Consumption"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Room Thermostat Temp"
+      unique_id: panasonic_heat_pump_room_thermostat_temp
+      state_topic: "panasonic_heat_pump/main/Room_Thermostat_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Z1 Water Target Temp"
+      unique_id: panasonic_heat_pump_z1_water_target_temp
+      state_topic: "panasonic_heat_pump/main/Z1_Water_Target_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Defrosting State"
+      unique_id: panasonic_heat_pump_defrosting_state
+      state_topic: "panasonic_heat_pump/main/Defrosting_State"
+
+    - name: "Panasonic Heat Pump Room Heater State"
+      unique_id: panasonic_heat_pump_room_heater_state
+      state_topic: "panasonic_heat_pump/main/Room_Heater_State"
+
+    - name: "Panasonic Heat Pump Operations Hours"
+      unique_id: panasonic_heat_pump_operations_hours
+      state_topic: "panasonic_heat_pump/main/Operations_Hours"
+      unit_of_measurement: "h"
+      device_class: duration
+      state_class: total_increasing
+
+    - name: "Panasonic Heat Pump Room Heater Operations Hours"
+      unique_id: panasonic_heat_pump_room_heater_operations_hours
+      state_topic: "panasonic_heat_pump/main/Room_Heater_Operations_Hours"
+      unit_of_measurement: "h"
+      device_class: duration
+      state_class: total_increasing
+
+    - name: "Panasonic Heat Pump Z1 Heat Curve Target High Temp"
+      unique_id: panasonic_heat_pump_z1_heat_curve_target_high_temp
+      state_topic: "panasonic_heat_pump/main/Z1_Heat_Curve_Target_High_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Z1 Heat Curve Target Low Temp"
+      unique_id: panasonic_heat_pump_z1_heat_curve_target_low_temp
+      state_topic: "panasonic_heat_pump/main/Z1_Heat_Curve_Target_Low_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Z1 Heat Curve Outside High Temp"
+      unique_id: panasonic_heat_pump_z1_heat_curve_outside_high_temp
+      state_topic: "panasonic_heat_pump/main/Z1_Heat_Curve_Outside_High_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Z1 Heat Curve Outside Low Temp"
+      unique_id: panasonic_heat_pump_z1_heat_curve_outside_low_temp
+      state_topic: "panasonic_heat_pump/main/Z1_Heat_Curve_Outside_Low_Temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump High Pressure"
+      unique_id: panasonic_heat_pump_high_pressure
+      state_topic: "panasonic_heat_pump/main/High_Pressure"
+      unit_of_measurement: "kgf/cm²"
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Compressor Current"
+      unique_id: panasonic_heat_pump_compressor_current
+      state_topic: "panasonic_heat_pump/main/Compressor_Current"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+
+    - name: "Panasonic Heat Pump Error"
+      unique_id: panasonic_heat_pump_error
+      state_topic: "panasonic_heat_pump/main/Error"
+
+    - name: "Panasonic Heat Pump LWT"
+      unique_id: panasonic_heat_pump_lwt
+      state_topic: "panasonic_heat_pump/LWT"
+
+template:
+  - sensor:
+      - name: "Aquarea COP Now"
+        unique_id: aquarea_cop_now
+        state_class: measurement
+        state: >
+          {% set produced = states('sensor.panasonic_heat_pump_heat_power_production') | float(0) %}
+          {% set consumed = states('sensor.panasonic_heat_pump_heat_power_consumption') | float(0) %}
+          {{ (produced / consumed) | round(2) if consumed > 100 else 0 }}
+
+      - name: "Aquarea Supply Return Delta"
+        unique_id: aquarea_supply_return_delta
+        unit_of_measurement: "K"
+        state_class: measurement
+        state: >
+          {% set supply = states('sensor.panasonic_heat_pump_main_outlet_temp') | float(0) %}
+          {% set return = states('sensor.panasonic_heat_pump_main_inlet_temp') | float(0) %}
+          {{ (supply - return) | round(1) }}
+
+      - name: "Aquarea Curve Effectiveness"
+        unique_id: aquarea_curve_effectiveness
+        unit_of_measurement: "K"
+        state_class: measurement
+        state: >
+          {% set target = states('sensor.panasonic_heat_pump_main_target_temp') | float(0) %}
+          {% set supply = states('sensor.panasonic_heat_pump_main_outlet_temp') | float(0) %}
+          {{ (target - supply) | round(1) }}
+
+      - name: "Aquarea Heat Pump State"
+        unique_id: aquarea_heat_pump_state
+        state: >
+          {% set defrost = states('sensor.panasonic_heat_pump_defrosting_state') | lower %}
+          {% set backup = states('sensor.panasonic_heat_pump_room_heater_state') | lower %}
+          {% set compressor = states('sensor.panasonic_heat_pump_compressor_freq') | float(0) %}
+          {% if defrost not in ['0', 'off', 'free', 'inactive', 'none', 'unknown', 'unavailable'] %}
+            Defrosting
+          {% elif backup not in ['0', 'off', 'free', 'inactive', 'none', 'unknown', 'unavailable'] %}
+            Backup heater
+          {% elif compressor > 0 %}
+            Heating
+          {% else %}
+            Standby
+          {% endif %}
+
+      - name: "Aquarea SCOP Daily"
+        unique_id: aquarea_scop_daily
+        state_class: measurement
+        state: >
+          {% set produced = states('sensor.aquarea_production_daily') | float(0) %}
+          {% set consumed = states('sensor.aquarea_consumption_daily') | float(0) %}
+          {{ (produced / consumed) | round(2) if consumed > 0 else 0 }}
+
+      - name: "Aquarea SCOP Monthly"
+        unique_id: aquarea_scop_monthly
+        state_class: measurement
+        state: >
+          {% set produced = states('sensor.aquarea_production_monthly') | float(0) %}
+          {% set consumed = states('sensor.aquarea_consumption_monthly') | float(0) %}
+          {{ (produced / consumed) | round(2) if consumed > 0 else 0 }}
+
+      - name: "Aquarea Norgespris Monthly Usage"
+        unique_id: aquarea_norgespris_monthly_usage
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >
+          {{ ((states('sensor.aquarea_consumption_monthly') | float(0) / 5000) * 100) | round(1) }}
+
+sensor:
+  - platform: integration
+    source: sensor.panasonic_heat_pump_heat_power_production
+    name: aquarea_heat_energy_production
+    unit_prefix: k
+    unit_time: h
+    method: left
+
+  - platform: integration
+    source: sensor.panasonic_heat_pump_heat_power_consumption
+    name: aquarea_heat_energy_consumption
+    unit_prefix: k
+    unit_time: h
+    method: left
+
+utility_meter:
+  aquarea_production_daily:
+    source: sensor.aquarea_heat_energy_production
+    cycle: daily
+  aquarea_consumption_daily:
+    source: sensor.aquarea_heat_energy_consumption
+    cycle: daily
+  aquarea_production_monthly:
+    source: sensor.aquarea_heat_energy_production
+    cycle: monthly
+  aquarea_consumption_monthly:
+    source: sensor.aquarea_heat_energy_consumption
+    cycle: monthly
+
 # Frontend configuration
 frontend:
   themes: !include_dir_merge_named ../themes/
