@@ -50,3 +50,12 @@ Thumbs.db
 *.tmp
 *.bak
 *.backup
+
+# Private household records (public repository)
+home/
+docs/dashboard-backups/
+docs/floor-heating*.md
+docs/gulvvarme-home-iteration.md
+docs/home-assistant-inventory.md
+docs/lights-dashboard.md
+docs/romstatus-tracking.md
