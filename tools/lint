@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$repo_root"
+
+set -- configuration ci .github/workflows
+
+if command -v yamllint >/dev/null 2>&1; then
+  exec yamllint "$@"
+fi
+
+if command -v uvx >/dev/null 2>&1; then
+  uv_cache_dir="${UV_CACHE_DIR:-$repo_root/.cache/uv}"
+  uv_tool_dir="${UV_TOOL_DIR:-$repo_root/.cache/uv-tools}"
+  mkdir -p "$uv_cache_dir" "$uv_tool_dir"
+  UV_CACHE_DIR="$uv_cache_dir" UV_TOOL_DIR="$uv_tool_dir" \
+    exec uvx --from yamllint==1.35.1 yamllint "$@"
+fi
+
+if command -v pipx >/dev/null 2>&1; then
+  exec pipx run --spec yamllint==1.35.1 yamllint "$@"
+fi
+
+echo "yamllint is unavailable. Install uv, pipx, or yamllint." >&2
+exit 1

@@ -1,4 +1,4 @@
-# Active automations live here.
+# Active repository-managed automations live here.
 #
 # This file is intentionally empty until real entity IDs and remote event data are
 # configured. See docs/ikea_remote_scene_setup.md for a current ZHA example.

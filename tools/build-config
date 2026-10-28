@@ -1,0 +1,46 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+source_dir="$repo_root/configuration"
+dist_root="${DIST_ROOT:-$repo_root/dist}"
+config_dir="$dist_root/config"
+
+rm -rf -- "$config_dir" "$dist_root/check-config"
+mkdir -p "$config_dir"
+
+rsync -a \
+  --exclude '.DS_Store' \
+  --exclude '.gitkeep' \
+  --exclude 'secrets.yaml' \
+  --exclude 'secrets.yaml.example' \
+  "$source_dir/" "$config_dir/"
+
+forbidden=$(find "$config_dir" \
+  \( -name '.storage' \
+  -o -name '.env' \
+  -o -name 'secrets.yaml' \
+  -o -name 'home-assistant_v2.db*' \
+  -o -name '*.log' \
+  -o -name '*.backup' \
+  -o -name '*.bak' \) -print)
+
+if [ -n "$forbidden" ]; then
+  echo "Refusing to build an artifact containing forbidden files:" >&2
+  echo "$forbidden" >&2
+  exit 1
+fi
+
+revision=${GITHUB_SHA:-$(git -C "$repo_root" rev-parse HEAD)}
+printf '%s\n' "$revision" > "$dist_root/REVISION"
+
+(
+  cd "$dist_root"
+  if command -v sha256sum >/dev/null 2>&1; then
+    find config -type f -print | LC_ALL=C sort | xargs sha256sum
+  else
+    find config -type f -print | LC_ALL=C sort | xargs shasum -a 256
+  fi
+) > "$dist_root/manifest.sha256"
+
+echo "Built $config_dir"

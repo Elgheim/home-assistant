@@ -10,10 +10,12 @@ This is a Home Assistant configuration repository containing custom cards, compo
 
 - `custom_cards/` - Custom Lovelace cards (TypeScript/JavaScript)
 - `custom_components/` - Custom Home Assistant integrations (Python)
-- `configuration/` - Home Assistant YAML configuration files
-- `automations/` - Automation definitions
-- `scripts/` - Home Assistant script definitions
-- `themes/` - Custom UI themes
+- `configuration/` - Self-contained repository-managed Home Assistant payload
+- `configuration/packages/` - Feature-oriented packages
+- `configuration/automations/` - Repository-managed automation definitions
+- `configuration/scripts/` - Repository-managed script definitions
+- `configuration/scenes/` - Repository-managed scene definitions
+- `configuration/themes/` - Repository-managed UI themes
 - `docs/` - Documentation and development notes
 
 ## Development Commands
@@ -54,12 +56,12 @@ mypy .
 
 ### Configuration Validation
 ```bash
-# Check Home Assistant configuration syntax
-hass --script check_config --config configuration/
+# Run the same checks as CI
+make test
 
-# Validate specific YAML files
-yamllint configuration/configuration.yaml
-yamllint automations/
+# Build and verify the deployable artifact
+make build
+./tools/verify-artifact dist
 ```
 
 ## Architecture Notes
@@ -77,10 +79,10 @@ yamllint automations/
 - Include proper error handling and logging
 
 ### Configuration Structure
-- Main config in `configuration/configuration.yaml`
-- Split configurations using `!include` directives
-- Automations and scripts in separate directories for organization
-- Use packages for grouping related functionality
+- Keep `configuration/configuration.yaml` as a small composition root.
+- Use packages for feature-oriented YAML such as Aquarea monitoring.
+- Keep UI/API-managed files separate from repository-managed directories.
+- Never edit or deploy `.storage`.
 
 ## File Naming Conventions
 - Custom cards: `[card-name].js` or `[card-name].ts`

@@ -3,6 +3,10 @@ name: Deploy Home Assistant
 on:
   workflow_dispatch:
     inputs:
+      run_id:
+        description: Successful Home Assistant workflow run ID from main
+        required: true
+        type: string
       restart:
         description: Restart Home Assistant after deploy
         required: true
@@ -12,59 +16,135 @@ on:
           - "false"
           - "true"
 
+permissions:
+  actions: read
+  contents: read
+
 concurrency:
   group: home-assistant-deploy
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy config
+    name: Deploy validated configuration
     runs-on: ubuntu-latest
     environment: production
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare example secrets for validation
-        run: cp configuration/secrets.yaml.example configuration/secrets.yaml
-
-      - name: Lint YAML
-        uses: ibiqlik/action-yamllint@v3
-        with:
-          file_or_dir: configuration automations scripts themes .github/workflows
-          config_file: .yamllint
-          strict: true
-
-      - name: Check Home Assistant config
-        run: >-
-          docker run --rm
-          -v "${{ github.workspace }}:/config-src:ro"
-          ghcr.io/home-assistant/home-assistant:stable
-          python -m homeassistant --script check_config --config /config-src/configuration
-
-      - name: Install SSH key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.HA_SSH_PRIVATE_KEY }}
-
-      - name: Trust Home Assistant host key
-        run: ssh-keyscan -p "${{ secrets.HA_SSH_PORT }}" "${{ secrets.HA_SSH_HOST }}" >> ~/.ssh/known_hosts
-
-      - name: Deploy configuration files
+      - name: Resolve validated workflow run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
         run: |
-          rsync -az --delete \
-            --exclude '.git' \
-            --exclude '.github' \
-            --exclude '.agents' \
-            --exclude 'skills-lock.json' \
-            --exclude 'configuration/secrets.yaml' \
-            --exclude 'configuration/.storage' \
-            ./ "${{ secrets.HA_SSH_USER }}@${{ secrets.HA_SSH_HOST }}:${{ secrets.HA_CONFIG_PATH }}/"
+          case "$RUN_ID" in
+            ''|*[!0-9]*) echo "run_id must be numeric." >&2; exit 2 ;;
+          esac
+
+          metadata=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID")
+          conclusion=$(printf '%s' "$metadata" | jq -r '.conclusion')
+          branch=$(printf '%s' "$metadata" | jq -r '.head_branch')
+          workflow=$(printf '%s' "$metadata" | jq -r '.path')
+          revision=$(printf '%s' "$metadata" | jq -r '.head_sha')
+
+          if [ "$conclusion" != "success" ] || [ "$branch" != "main" ]; then
+            echo "Run $RUN_ID is not a successful main-branch run." >&2
+            exit 1
+          fi
+
+          if [ "$workflow" != ".github/workflows/home-assistant.yml" ]; then
+            echo "Run $RUN_ID did not execute the Home Assistant validation workflow." >&2
+            exit 1
+          fi
+
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+      - name: Check out validated revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ steps.source.outputs.revision }}
+
+      - name: Download validated artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: home-assistant-config-${{ steps.source.outputs.revision }}
+          path: dist
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.run_id }}
+
+      - name: Verify artifact provenance and checksums
+        env:
+          EXPECTED_REVISION: ${{ steps.source.outputs.revision }}
+        run: |
+          ./tools/verify-artifact dist
+          actual_revision=$(tr -d '[:space:]' < dist/REVISION)
+          if [ "$actual_revision" != "$EXPECTED_REVISION" ]; then
+            echo "Artifact revision does not match the validated workflow run." >&2
+            exit 1
+          fi
+
+      - name: Configure pinned SSH identity
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HA_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.HA_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Preview, back up, deploy, and validate remotely
+        id: deploy
+        env:
+          HA_SSH_HOST: ${{ secrets.HA_SSH_HOST }}
+          HA_SSH_PORT: ${{ secrets.HA_SSH_PORT }}
+          HA_SSH_USER: ${{ secrets.HA_SSH_USER }}
+          HA_CONFIG_PATH: ${{ secrets.HA_CONFIG_PATH }}
+        run: ./tools/deploy-config dist
 
       - name: Restart Home Assistant
         if: inputs.restart == 'true'
+        env:
+          HA_SSH_HOST: ${{ secrets.HA_SSH_HOST }}
+          HA_SSH_PORT: ${{ secrets.HA_SSH_PORT }}
+          HA_SSH_USER: ${{ secrets.HA_SSH_USER }}
+        run: ssh -p "$HA_SSH_PORT" "$HA_SSH_USER@$HA_SSH_HOST" ha core restart
+
+      - name: Verify Home Assistant health
+        if: inputs.restart == 'true'
+        env:
+          HA_URL: ${{ secrets.HA_URL }}
+          HA_TOKEN: ${{ secrets.HA_TOKEN }}
         run: |
-          ssh -p "${{ secrets.HA_SSH_PORT }}" \
-            "${{ secrets.HA_SSH_USER }}@${{ secrets.HA_SSH_HOST }}" \
-            "${{ secrets.HA_RESTART_COMMAND }}"
+          attempt=1
+          while [ "$attempt" -le 30 ]; do
+            if curl --fail --silent --show-error \
+              --header "Authorization: Bearer $HA_TOKEN" \
+              --header "Content-Type: application/json" \
+              "$HA_URL/api/" >/dev/null; then
+              exit 0
+            fi
+            attempt=$((attempt + 1))
+            sleep 10
+          done
+          echo "Home Assistant did not become healthy after restart." >&2
+          exit 1
+
+      - name: Roll back after failed restart health check
+        if: failure() && steps.deploy.outcome == 'success' && inputs.restart == 'true'
+        env:
+          HA_SSH_HOST: ${{ secrets.HA_SSH_HOST }}
+          HA_SSH_PORT: ${{ secrets.HA_SSH_PORT }}
+          HA_SSH_USER: ${{ secrets.HA_SSH_USER }}
+          HA_CONFIG_PATH: ${{ secrets.HA_CONFIG_PATH }}
+          REVISION: ${{ steps.source.outputs.revision }}
+        run: |
+          ssh -p "$HA_SSH_PORT" "$HA_SSH_USER@$HA_SSH_HOST" \
+            "sh -s -- rollback '$HA_CONFIG_PATH' '$REVISION'" \
+            < tools/remote-deploy-config
+          ssh -p "$HA_SSH_PORT" "$HA_SSH_USER@$HA_SSH_HOST" ha core restart
+
+      - name: Remove SSH private key
+        if: always()
+        run: rm -f "$HOME/.ssh/id_ed25519"

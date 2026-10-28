@@ -1,4 +1,4 @@
-# Active scenes live here.
+# Active repository-managed scenes live here.
 #
 # Keep placeholder scenes out of active config so Home Assistant can validate
 # cleanly before real entity IDs are known. See docs/ikea_remote_scene_setup.md

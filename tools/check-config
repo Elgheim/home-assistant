@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+dist_root="${DIST_ROOT:-$repo_root/dist}"
+check_dir="$dist_root/check-config"
+ha_version=$(tr -d '[:space:]' < "$repo_root/.ha-version")
+ha_image=$(tr -d '[:space:]' < "$repo_root/.ha-image")
+ha_image="${HA_IMAGE:-$ha_image}"
+
+if [ -z "${HA_IMAGE:-}" ]; then
+  case "$ha_image" in
+    *":$ha_version@sha256:"*) ;;
+    *) echo ".ha-image does not match .ha-version." >&2; exit 1 ;;
+  esac
+fi
+
+DIST_ROOT="$dist_root" "$repo_root/tools/build-config"
+
+rm -rf -- "$check_dir"
+mkdir -p "$check_dir"
+rsync -a "$dist_root/config/" "$check_dir/"
+cp "$repo_root/ci/secrets.yaml" "$check_dir/secrets.yaml"
+cp "$repo_root/ci/empty-list.yaml" "$check_dir/automations.yaml"
+cp "$repo_root/ci/empty-map.yaml" "$check_dir/scripts.yaml"
+cp "$repo_root/ci/empty-list.yaml" "$check_dir/scenes.yaml"
+
+docker run --rm \
+  --volume "$check_dir:/config:ro" \
+  "$ha_image" \
+  python -m homeassistant --script check_config --config /config

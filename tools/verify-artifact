@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+artifact_root=${1:-}
+
+if [ -z "$artifact_root" ] || [ ! -d "$artifact_root/config" ]; then
+  echo "Usage: tools/verify-artifact <artifact-root>" >&2
+  exit 2
+fi
+
+if [ ! -s "$artifact_root/manifest.sha256" ] || [ ! -s "$artifact_root/REVISION" ]; then
+  echo "Artifact is missing its manifest or revision." >&2
+  exit 1
+fi
+
+(
+  cd "$artifact_root"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum -c manifest.sha256
+  else
+    shasum -a 256 -c manifest.sha256
+  fi
+)

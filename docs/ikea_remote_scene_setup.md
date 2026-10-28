@@ -33,7 +33,7 @@ lighting_scene:
 
 ## Scene Example
 
-Copy this into `configuration/scenes.yaml` only after replacing every entity ID with real lights.
+Copy this into `configuration/scenes/ikea_remote.yaml` only after replacing every entity ID with real lights.
 
 ```yaml
 - id: day_light
@@ -63,7 +63,7 @@ Copy this into `configuration/scenes.yaml` only after replacing every entity ID 
 
 ## Automation Example
 
-Copy this into `automations/ikea_remote_scene_cycling.yaml` after updating the `command` value to match the event emitted by your remote.
+Copy this into `configuration/automations/ikea_remote_scene_cycling.yaml` after updating the `command` value to match the event emitted by your remote.
 
 ```yaml
 - id: ikea_remote_cycle_lighting_scenes
@@ -98,7 +98,7 @@ Copy this into `automations/ikea_remote_scene_cycling.yaml` after updating the `
 After applying real values, run:
 
 ```bash
-hass --script check_config --config configuration/
+make check
 ```
 
 If `hass` is not installed locally, run the configuration check from Home Assistant itself before restarting.

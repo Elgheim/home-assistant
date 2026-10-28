@@ -1,0 +1,3 @@
+# Previous repository-managed configuration used by the rollback test.
+homeassistant:
+  name: Previous configuration

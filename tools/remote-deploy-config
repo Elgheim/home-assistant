@@ -1,0 +1,101 @@
+#!/bin/sh
+set -eu
+
+mode=${1:-}
+config_root=${2:-}
+release=${3:-}
+
+case "$config_root" in
+  /*) ;;
+  *) echo "HA config path must be absolute." >&2; exit 2 ;;
+esac
+
+case "$config_root" in
+  /|*..*|*[!A-Za-z0-9._/-]*)
+    echo "Refusing unsafe HA config path: $config_root" >&2
+    exit 2
+    ;;
+esac
+
+case "$release" in
+  ''|*[!A-Fa-f0-9]*)
+    echo "Release must be a hexadecimal Git revision." >&2
+    exit 2
+    ;;
+esac
+
+managed_paths="configuration.yaml input_select.yaml packages automations scripts scenes themes"
+backup_dir="$config_root/.repo-backups/$release"
+staging_dir="$config_root/.repo-staging/$release/config"
+
+restore_release() {
+  if [ ! -s "$backup_dir/managed.tar.gz" ]; then
+    echo "No rollback archive exists for $release." >&2
+    return 1
+  fi
+
+  for path in $managed_paths; do
+    rm -rf -- "${config_root:?}/$path"
+  done
+
+  tar -xzf "$backup_dir/managed.tar.gz" -C "$config_root"
+}
+
+case "$mode" in
+  deploy)
+    if [ ! -f "$staging_dir/configuration.yaml" ]; then
+      echo "Staged configuration is missing for $release." >&2
+      exit 1
+    fi
+
+    for runtime_file in secrets.yaml automations.yaml scripts.yaml scenes.yaml; do
+      if [ ! -f "$config_root/$runtime_file" ]; then
+        echo "Required Home Assistant-managed file is missing: $runtime_file" >&2
+        exit 1
+      fi
+    done
+
+    if [ -e "$backup_dir/managed.tar.gz" ]; then
+      echo "A backup already exists for $release; refusing to overwrite it." >&2
+      exit 1
+    fi
+
+    mkdir -p "$backup_dir"
+    existing_paths=""
+    for path in $managed_paths; do
+      if [ -e "$config_root/$path" ]; then
+        existing_paths="$existing_paths $path"
+      fi
+    done
+
+    if [ -n "$existing_paths" ]; then
+      # shellcheck disable=SC2086
+      tar -czf "$backup_dir/managed.tar.gz" -C "$config_root" $existing_paths
+    else
+      tar -czf "$backup_dir/managed.tar.gz" --files-from /dev/null
+    fi
+
+    install -m 0644 "$staging_dir/configuration.yaml" "$config_root/configuration.yaml"
+    install -m 0644 "$staging_dir/input_select.yaml" "$config_root/input_select.yaml"
+
+    for path in packages automations scripts scenes themes; do
+      mkdir -p "$config_root/$path"
+      rsync -a --delete-delay "$staging_dir/$path/" "$config_root/$path/"
+    done
+
+    if ! ha core check; then
+      echo "Remote Home Assistant check failed; restoring $release backup." >&2
+      restore_release
+      ha core check
+      exit 1
+    fi
+    ;;
+  rollback)
+    restore_release
+    ha core check
+    ;;
+  *)
+    echo "Usage: remote-deploy-config <deploy|rollback> <config-root> <revision>" >&2
+    exit 2
+    ;;
+esac

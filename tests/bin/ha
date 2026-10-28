@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+if [ "${1:-}" = "core" ] && [ "${2:-}" = "check" ]; then
+  exit 0
+fi
+
+if [ "${1:-}" = "core" ] && [ "${2:-}" = "restart" ]; then
+  exit 0
+fi
+
+echo "Unexpected test ha command: $*" >&2
+exit 2

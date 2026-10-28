@@ -1,0 +1,49 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+tmp_root=$(mktemp -d)
+trap 'rm -rf -- "$tmp_root"' EXIT HUP INT TERM
+
+config_root="$tmp_root/config"
+revision=0123456789abcdef0123456789abcdef01234567
+staging_dir="$config_root/.repo-staging/$revision/config"
+
+"$repo_root/tools/build-config"
+
+mkdir -p "$staging_dir" "$config_root/packages" "$config_root/.storage"
+rsync -a "$repo_root/dist/config/" "$staging_dir/"
+
+cp "$repo_root/tests/fixtures/old-configuration.yaml" "$config_root/configuration.yaml"
+cp "$repo_root/configuration/input_select.yaml" "$config_root/input_select.yaml"
+cp "$repo_root/tests/fixtures/legacy-package.yaml" "$config_root/packages/legacy.yaml"
+cp "$repo_root/ci/secrets.yaml" "$config_root/secrets.yaml"
+cp "$repo_root/ci/empty-list.yaml" "$config_root/automations.yaml"
+cp "$repo_root/ci/empty-map.yaml" "$config_root/scripts.yaml"
+cp "$repo_root/ci/empty-list.yaml" "$config_root/scenes.yaml"
+cp "$repo_root/ci/empty-map.yaml" "$config_root/.storage/sentinel"
+
+PATH="$repo_root/tests/bin:$PATH" \
+  "$repo_root/tools/remote-deploy-config" deploy "$config_root" "$revision"
+
+cmp "$repo_root/dist/config/configuration.yaml" "$config_root/configuration.yaml"
+test ! -e "$config_root/packages/legacy.yaml"
+cmp "$repo_root/ci/empty-map.yaml" "$config_root/.storage/sentinel"
+cmp "$repo_root/ci/secrets.yaml" "$config_root/secrets.yaml"
+
+PATH="$repo_root/tests/bin:$PATH" \
+  "$repo_root/tools/remote-deploy-config" rollback "$config_root" "$revision"
+
+cmp "$repo_root/tests/fixtures/old-configuration.yaml" "$config_root/configuration.yaml"
+cmp "$repo_root/tests/fixtures/legacy-package.yaml" "$config_root/packages/legacy.yaml"
+cmp "$repo_root/ci/empty-map.yaml" "$config_root/.storage/sentinel"
+cmp "$repo_root/ci/secrets.yaml" "$config_root/secrets.yaml"
+
+if PATH="$repo_root/tests/bin:$PATH" \
+  "$repo_root/tools/remote-deploy-config" deploy "$config_root" "$revision" \
+  >/dev/null 2>&1; then
+  echo "Redeploying the same revision unexpectedly replaced its backup." >&2
+  exit 1
+fi
+
+echo "Scoped deployment and rollback test passed."

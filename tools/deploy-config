@@ -1,0 +1,59 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+artifact_root=${1:-}
+
+: "${HA_SSH_HOST:?Set HA_SSH_HOST}"
+: "${HA_SSH_PORT:?Set HA_SSH_PORT}"
+: "${HA_SSH_USER:?Set HA_SSH_USER}"
+: "${HA_CONFIG_PATH:?Set HA_CONFIG_PATH}"
+
+"$repo_root/tools/verify-artifact" "$artifact_root"
+release=$(tr -d '[:space:]' < "$artifact_root/REVISION")
+
+case "$HA_CONFIG_PATH" in
+  /*) ;;
+  *) echo "HA_CONFIG_PATH must be absolute." >&2; exit 2 ;;
+esac
+
+case "$HA_CONFIG_PATH" in
+  /|*..*|*[!A-Za-z0-9._/-]*)
+    echo "Refusing unsafe HA_CONFIG_PATH: $HA_CONFIG_PATH" >&2
+    exit 2
+    ;;
+esac
+
+case "$HA_SSH_PORT" in
+  ''|*[!0-9]*) echo "HA_SSH_PORT must be numeric." >&2; exit 2 ;;
+esac
+
+case "$HA_SSH_USER" in
+  ''|*[!A-Za-z0-9_-]*) echo "HA_SSH_USER contains unsafe characters." >&2; exit 2 ;;
+esac
+
+case "$HA_SSH_HOST" in
+  ''|*[!A-Za-z0-9._-]*) echo "HA_SSH_HOST contains unsafe characters." >&2; exit 2 ;;
+esac
+
+remote="$HA_SSH_USER@$HA_SSH_HOST"
+ssh_command="ssh -p $HA_SSH_PORT"
+remote_stage="$HA_CONFIG_PATH/.repo-staging/$release/config"
+
+ssh -p "$HA_SSH_PORT" "$remote" "mkdir -p '$remote_stage'"
+rsync -az --delete -e "$ssh_command" "$artifact_root/config/" "$remote:$remote_stage/"
+
+echo "Deployment preview for $release:"
+for path in configuration.yaml input_select.yaml; do
+  rsync -azn --itemize-changes -e "$ssh_command" \
+    "$artifact_root/config/$path" "$remote:$HA_CONFIG_PATH/$path"
+done
+
+for path in packages automations scripts scenes themes; do
+  rsync -azn --delete-delay --itemize-changes -e "$ssh_command" \
+    "$artifact_root/config/$path/" "$remote:$HA_CONFIG_PATH/$path/"
+done
+
+ssh -p "$HA_SSH_PORT" "$remote" \
+  "sh -s -- deploy '$HA_CONFIG_PATH' '$release'" \
+  < "$repo_root/tools/remote-deploy-config"
