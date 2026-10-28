@@ -11,6 +11,9 @@ configuration/www/community/
 .agents/
 skills-lock.json
 
+# Local MCP/OpenCode environment
+.env
+
 # Node modules
 node_modules/
 npm-debug.log*

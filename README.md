@@ -74,6 +74,12 @@ Configure these GitHub Actions secrets before running the deploy workflow:
 
 Use a protected `production` environment in GitHub if deploys should require approval.
 
+## MCP Server
+
+Home Assistant MCP Server setup notes are in `docs/mcp_server_setup.md`. Keep MCP tokens and client secrets out of this repository.
+
+This repo includes a project-local `opencode.json` for OpenCode. Copy `.env.example` to `.env`, fill in `HOMEASSISTANT_URL` and `HOMEASSISTANT_TOKEN`, then run `opencode .` from the repo root.
+
 ## Branch Protection
 
 Protect `main` and require the `Validate configuration` status check from GitHub Actions before merging. This keeps invalid YAML or invalid Home Assistant config out of the default branch.
