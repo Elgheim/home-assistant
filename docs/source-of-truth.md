@@ -35,7 +35,11 @@ The labeled `automation ui`, `script ui`, and `scene ui` entries in `configurati
 
 Integrations, entity registry entries, devices, areas, helpers, and storage-mode dashboards normally live in Home Assistant's internal storage. Manage them through the Home Assistant UI or supported REST/WebSocket APIs. Do not copy or patch `.storage` files.
 
-The inventory in `docs/home-assistant-inventory.md` is a point-in-time operational record, not a deployable export.
+The local inventory in `docs/private/home-assistant-inventory.md` is a point-in-time operational record, not a deployable export.
+
+## Private household records
+
+This repository is public. Household-specific notes, live inventories, dashboard exports, and backups go in the Git-ignored `docs/private/` directory and stay local. Public docs may name the directory but must not depend on its contents.
 
 ## Unmanaged repository content
 

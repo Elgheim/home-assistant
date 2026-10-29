@@ -15,6 +15,7 @@
 - Put repository-managed automations, scripts, and scenes in their corresponding directories under `configuration/`.
 - Keep `configuration/configuration.yaml` as a small composition root.
 - Put operational explanations in `README.md` or `docs/`, not in this file.
+- This repository is public. Put household-specific notes, live inventories, dashboard exports, and backups in the ignored `docs/private/` directory, never elsewhere in `docs/`.
 
 ## Definition of done
 
