@@ -70,7 +70,7 @@ Thermostat placement matters: the penstue sensor originally sat in a window sill
 | Location | Setpoint | Installed | Purpose |
 |---|---|---|---|
 | Penstue/spisestue, under window | 18 °C | Existing | Buffer for very cold days. Senses cold downdraft from the window, so it runs even when the room holds 22 °C if set higher. Used 86 kWh in October 2026 at 21 °C. |
-| Kitchen | ~20 °C recommended | 2026-11-21 | Covers cold zones in the kitchen. The previous owner laid no pipes under the kitchen benches, so the kitchen loop cannot keep up in cold weather. |
+| Kitchen | 20 °C day, 16 °C night | 2026-11-21 | Covers cold zones in the kitchen. The previous owner laid no pipes under the kitchen benches, so the kitchen loop cannot keep up in cold weather. |
 
 Set each panel heater a couple of degrees below the room's floor heating setpoint so the heat pump does most of the work and the heater only covers the gap.
 
@@ -88,4 +88,4 @@ Neither heater is in HA yet (only `update.adax_heaters_update` exists). Plan: ad
 - 2026-10-27: Penstue thermostat moved from window sill to inside wall.
 - 2026-10-28: Living room Adax heater lowered to 18 °C.
 - 2026-11: Yttergang floor poured (MegaPlan, ~40 mm) and floor heating loop connected.
-- 2026-11-21: Adax heater installed in the kitchen as supplementary heat.
+- 2026-11-21: Adax heater installed in the kitchen as supplementary heat (20 °C day, 16 °C night).
